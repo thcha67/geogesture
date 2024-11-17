@@ -56,6 +56,7 @@ while True:
 
 with open("hsv.json", "w") as f:
     json.dump({"hsv_min": [h_min, s_min, v_min], "hsv_max": [h_max, s_max, v_max]}, f)
+    print(f"HSV values saved to hsv.json")
     
 cap.release()
 cv2.destroyAllWindows()

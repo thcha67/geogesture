@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 import json
+import mouse
+import keyboard
 
 
 class FingerCounter:
@@ -32,14 +34,7 @@ class FingerCounter:
             cv2.drawContours(roi_frame, h_contour, -1, (255,0,0), 2)
             h_hull = cv2.convexHull(h_contour)
             cv2.drawContours(roi_frame, [h_hull], -1, (0,0,255), 2, 2)
-            # find center of mass
-            M = cv2.moments(h_contour)
-            try:
-                cx = int(M['m10']/M['m00'])
-                cy = int(M['m01']/M['m00'])
-                cv2.circle(roi_frame, (cx, cy), 5, (0,255,0), -1)
-            except ZeroDivisionError:
-                pass
+
     
             return h_contour
         else:
@@ -74,22 +69,37 @@ class FingerCounter:
             
             
     def run(self):
+        center_of_mass = [0,0]
+        i = 0
+        speed_each_n_frames = 5
         while (True):
             ret, frame = self.cap.read()
             if not ret:
                 break
             frame = cv2.flip(frame, 1)
             mask, roi_frame = self.segment_hand(frame)
-            cv2.rectangle(frame, self.roi_p1, self.roi_p2, (0,255,0), 2)
+            cv2.rectangle(frame, self.roi_p1, self.roi_p2, (0, 255, 0), 2)
             cv2.imshow("Mask", mask)
             h_contour = self.find_contours(mask, roi_frame)
+            if h_contour is not None and i % speed_each_n_frames == 0:
+                M = cv2.moments(h_contour)
+                cx = int(M['m10']/M['m00'])
+                cy = int(M['m01']/M['m00'])
+
+                center_of_mass = [cx, cy]
+            cv2.circle(roi_frame, center_of_mass, 5, (0,255,0), -1)
+
             count = self.find_fingers(h_contour)
             cv2.putText(frame, str(count), (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 2, cv2.LINE_AA)
             cv2.imshow("Frame", frame)
+            i += 1
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
+            
         self.cap.release()
         cv2.destroyAllWindows()
+
+        returns = [count, center_of_mass]
         
 if __name__ == "__main__":
     fc = FingerCounter(0)
