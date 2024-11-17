@@ -3,6 +3,8 @@ import numpy as np
 import json
 import mouse
 import keyboard
+from multiprocessing import Process, Queue, Event
+import multiprocessing as mp
 
 
 class FingerCounter:
@@ -13,6 +15,9 @@ class FingerCounter:
         self.height = self.cap.get(4)
         self.roi_p1 = (int(self.width/2), 0)
         self.roi_p2 = (int(self.width), int(self.height/2))
+        self.previous_count = 0
+        self.previous_cx = 0
+        self.previous_cy = 0
         
     def segment_hand(self, frame):
         roi_frame = frame[self.roi_p1[1]:self.roi_p2[1],self.roi_p1[0]:self.roi_p2[0]]
@@ -68,7 +73,7 @@ class FingerCounter:
             return count
             
             
-    def run(self):
+    def run(self, queue, flags):
         center_of_mass = [0,0]
         i = 0
         speed_each_n_frames = 5
@@ -79,7 +84,7 @@ class FingerCounter:
             frame = cv2.flip(frame, 1)
             mask, roi_frame = self.segment_hand(frame)
             cv2.rectangle(frame, self.roi_p1, self.roi_p2, (0, 255, 0), 2)
-            cv2.imshow("Mask", mask)
+            # cv2.imshow("Mask", mask)
             h_contour = self.find_contours(mask, roi_frame)
             if h_contour is not None and i % speed_each_n_frames == 0:
                 M = cv2.moments(h_contour)
@@ -93,14 +98,47 @@ class FingerCounter:
             cv2.putText(frame, str(count), (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 2, cv2.LINE_AA)
             cv2.imshow("Frame", frame)
             i += 1
+            self.analyse([count, center_of_mass], queue, flags[0])
             if cv2.waitKey(1) & 0xFF == ord('q'):
+                flags[1].set()
                 break
+                
+
             
         self.cap.release()
         cv2.destroyAllWindows()
 
-        returns = [count, center_of_mass]
+
+    def analyse(self, returns, queue, flag):
+        count = returns[0]
+        cx, cy = returns[1]
+        # check for new data
+        if (count != self.previous_count) or (cx != self.previous_cx) or (cy != self.previous_cy):
+            queue.put(returns)
+            self.previous_count = count
+            self.previous_cx = cx
+            self.previous_cy = cy
+            flag.set()
         
-if __name__ == "__main__":
+
+def process(queue, flags):
     fc = FingerCounter(0)
-    fc.run()
+    fc.run(queue, flags)
+
+if __name__ == "__main__":
+    mp.freeze_support()
+    queue = Queue()
+    flags = [Event(), Event()]
+    p = Process(target=process, args=(queue, flags))
+    p.start()
+    while True:
+        if flags[0].is_set():
+            count, center_of_mass = queue.get()
+            print(count, center_of_mass)
+            flags[0].clear()
+        if flags[1].is_set():
+            break
+    p.join()
+    
+    
+        
