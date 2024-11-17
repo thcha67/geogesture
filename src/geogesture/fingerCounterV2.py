@@ -31,14 +31,17 @@ class FingerCounter:
             h_contour = max(contours, key = cv2.contourArea) # Assumes biggest area is the hand
             cv2.drawContours(roi_frame, h_contour, -1, (255,0,0), 2)
             h_hull = cv2.convexHull(h_contour)
+            h_hull[::-1].sort(axis=0)
             cv2.drawContours(roi_frame, [h_hull], -1, (0,0,255), 2, 2)
             # find center of mass
             M = cv2.moments(h_contour)
-            cx = int(M['m10']/M['m00'])
-            cy = int(M['m01']/M['m00'])
-            cv2.circle(roi_frame, (cx, cy), 5, (0,255,0), -1)
-            
-
+            try:
+                cx = int(M['m10']/M['m00'])
+                cy = int(M['m01']/M['m00'])
+                cv2.circle(roi_frame, (cx, cy), 5, (0,255,0), -1)
+            except ZeroDivisionError:
+                pass
+    
             return h_contour
         else:
             return None
@@ -49,8 +52,9 @@ class FingerCounter:
             return 0
         hand_perim = cv2.arcLength(h_contour,True)
         hand_polygon = cv2.approxPolyDP(h_contour, 0.02*hand_perim, True)
-        h_pol_hull = cv2.convexHull(hand_polygon,returnPoints=False)
-        convex_defects = cv2.convexityDefects(hand_polygon,h_pol_hull)
+        h_pol_hull = cv2.convexHull(hand_polygon, returnPoints=False)
+        h_pol_hull[::-1].sort(axis=0)
+        convex_defects = cv2.convexityDefects(hand_polygon, h_pol_hull)
         if convex_defects is not None:
             count = 0
             points = []
