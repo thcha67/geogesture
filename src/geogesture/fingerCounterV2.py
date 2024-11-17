@@ -6,7 +6,7 @@ import json
 class FingerCounter:
     
     def __init__(self, video_source):
-        self.cap = cv2.VideoCapture(video_source)
+        self.cap = cv2.VideoCapture(video_source, cv2.CAP_DSHOW)
         self.width = self.cap.get(3)
         self.height = self.cap.get(4)
         self.roi_p1 = (int(self.width/2), 0)
@@ -40,8 +40,13 @@ class FingerCounter:
             
 
             return h_contour
+        else:
+            return None
+
         
     def find_fingers(self, h_contour):
+        if h_contour is None:
+            return 0
         hand_perim = cv2.arcLength(h_contour,True)
         hand_polygon = cv2.approxPolyDP(h_contour, 0.02*hand_perim, True)
         h_pol_hull = cv2.convexHull(hand_polygon,returnPoints=False)
@@ -68,9 +73,11 @@ class FingerCounter:
     def run(self):
         while (True):
             ret, frame = self.cap.read()
+            if not ret:
+                break
             frame = cv2.flip(frame, 1)
-            cv2.rectangle(frame, self.roi_p1, self.roi_p2, (0,255,0), 2)
             mask, roi_frame = self.segment_hand(frame)
+            cv2.rectangle(frame, self.roi_p1, self.roi_p2, (0,255,0), 2)
             cv2.imshow("Mask", mask)
             h_contour = self.find_contours(mask, roi_frame)
             count = self.find_fingers(h_contour)
