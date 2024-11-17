@@ -16,11 +16,11 @@ class FingerCounter:
         roi_frame = frame[self.roi_p1[1]:self.roi_p2[1],self.roi_p1[0]:self.roi_p2[0]]
         roi_blur = cv2.GaussianBlur(roi_frame, (5,5),0)
         roi_hsv = cv2.cvtColor(roi_blur, cv2.COLOR_BGR2HSV)
-        
+
         with open("hsv.json") as f:
             hsv_values = json.load(f)
-            lower_hsv = np.array(hsv_values["lower_hsv"])
-            upper_hsv = np.array(hsv_values["upper_hsv"])
+            lower_hsv = np.array(hsv_values["hsv_min"])
+            upper_hsv = np.array(hsv_values["hsv_max"])
         
         mask = cv2.inRange(roi_hsv, lower_hsv, upper_hsv)
         return mask, roi_frame
