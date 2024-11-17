@@ -5,7 +5,7 @@ import numpy as np
 class FingerCounter:
     
     def __init__(self, video_source):
-        self.cap = cv2.VideoCapture(video_source)
+        self.cap = cv2.VideoCapture(video_source, cv2.CAP_DSHOW)
         self.width = self.cap.get(3)
         self.height = self.cap.get(4)
         self.roi_p1 = (int(self.width/2), 0)
@@ -15,8 +15,8 @@ class FingerCounter:
         roi_frame = frame[self.roi_p1[1]:self.roi_p2[1],self.roi_p1[0]:self.roi_p2[0]]
         roi_blur = cv2.GaussianBlur(roi_frame, (5,5),0)
         roi_hsv = cv2.cvtColor(roi_blur, cv2.COLOR_BGR2HSV)
-        lower_hsv = np.array([0,0,0])
-        upper_hsv = np.array([179,255,142])
+        lower_hsv = np.array([0,35,0])
+        upper_hsv = np.array([179,255,255])
         mask = cv2.inRange(roi_hsv, lower_hsv, upper_hsv)
         return mask, roi_frame
     
@@ -28,8 +28,13 @@ class FingerCounter:
             h_hull = cv2.convexHull(h_contour)
             cv2.drawContours(roi_frame, [h_hull], -1, (0,0,255), 2, 2)
             return h_contour
+        else:
+            return None
+
         
     def find_fingers(self, h_contour):
+        if h_contour is None:
+            return 0
         hand_perim = cv2.arcLength(h_contour,True)
         hand_polygon = cv2.approxPolyDP(h_contour, 0.02*hand_perim, True)
         h_pol_hull = cv2.convexHull(hand_polygon,returnPoints=False)
@@ -56,9 +61,11 @@ class FingerCounter:
     def run(self):
         while (True):
             ret, frame = self.cap.read()
+            if not ret:
+                break
             frame = cv2.flip(frame, 1)
-            cv2.rectangle(frame, self.roi_p1, self.roi_p2, (0,255,0), 2)
             mask, roi_frame = self.segment_hand(frame)
+            cv2.rectangle(frame, self.roi_p1, self.roi_p2, (0,255,0), 2)
             cv2.imshow("Mask", mask)
             h_contour = self.find_contours(mask, roi_frame)
             count = self.find_fingers(h_contour)

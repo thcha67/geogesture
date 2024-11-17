@@ -14,7 +14,7 @@ cv2.createTrackbar("Val Min", "TrackBars", 153, 255, lambda x: x)
 cv2.createTrackbar("Val Max", "TrackBars", 255, 255, lambda x: x)
 
 # Initialize video capture
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 width = cap.get(3)
 height = cap.get(4)
 
