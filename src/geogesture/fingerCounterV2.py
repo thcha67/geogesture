@@ -19,8 +19,8 @@ class FingerCounter:
         
         with open("hsv.json") as f:
             hsv_values = json.load(f)
-            lower_hsv = np.array(hsv_values["lower_hsv"])
-            upper_hsv = np.array(hsv_values["upper_hsv"])
+            lower_hsv = np.array(hsv_values["hsv_min"])
+            upper_hsv = np.array(hsv_values["hsv_max"])
         
         mask = cv2.inRange(roi_hsv, lower_hsv, upper_hsv)
         return mask, roi_frame

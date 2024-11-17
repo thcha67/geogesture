@@ -7,10 +7,10 @@ import numpy as np
 cv2.namedWindow("TrackBars")
 cv2.resizeWindow("TrackBars", 640, 240)
 cv2.createTrackbar("Hue Min", "TrackBars", 0, 179, lambda x: x)
-cv2.createTrackbar("Hue Max", "TrackBars", 19, 179, lambda x: x)
-cv2.createTrackbar("Sat Min", "TrackBars", 110, 255, lambda x: x)
-cv2.createTrackbar("Sat Max", "TrackBars", 240, 255, lambda x: x)
-cv2.createTrackbar("Val Min", "TrackBars", 153, 255, lambda x: x)
+cv2.createTrackbar("Hue Max", "TrackBars", 0, 179, lambda x: x)
+cv2.createTrackbar("Sat Min", "TrackBars", 0, 255, lambda x: x)
+cv2.createTrackbar("Sat Max", "TrackBars", 255, 255, lambda x: x)
+cv2.createTrackbar("Val Min", "TrackBars", 0, 255, lambda x: x)
 cv2.createTrackbar("Val Max", "TrackBars", 255, 255, lambda x: x)
 
 # Initialize video capture
