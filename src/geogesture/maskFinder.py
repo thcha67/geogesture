@@ -1,17 +1,20 @@
 import cv2
 import numpy as np
+import json
 
-
-
+with open("hsv.json") as f:
+    hsv_values = json.load(f)
+    h_min, s_min, v_min = hsv_values["hsv_min"]
+    h_max, s_max, v_max = hsv_values["hsv_max"]
 
 cv2.namedWindow("TrackBars")
 cv2.resizeWindow("TrackBars", 640, 240)
-cv2.createTrackbar("Hue Min", "TrackBars", 0, 179, lambda x: x)
-cv2.createTrackbar("Hue Max", "TrackBars", 179, 179, lambda x: x)
-cv2.createTrackbar("Sat Min", "TrackBars", 0, 255, lambda x: x)
-cv2.createTrackbar("Sat Max", "TrackBars", 250, 255, lambda x: x)
-cv2.createTrackbar("Val Min", "TrackBars", 0, 255, lambda x: x)
-cv2.createTrackbar("Val Max", "TrackBars", 255, 255, lambda x: x)
+cv2.createTrackbar("Hue Min", "TrackBars", h_min, 179, lambda x: x)
+cv2.createTrackbar("Hue Max", "TrackBars", h_max, 179, lambda x: x)
+cv2.createTrackbar("Sat Min", "TrackBars", s_min, 255, lambda x: x)
+cv2.createTrackbar("Sat Max", "TrackBars", s_max, 255, lambda x: x)
+cv2.createTrackbar("Val Min", "TrackBars", v_min, 255, lambda x: x)
+cv2.createTrackbar("Val Max", "TrackBars", v_max, 255, lambda x: x)
 
 # Initialize video capture
 cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
@@ -50,6 +53,9 @@ while True:
     # cv2.imshow("Stacked Images", imgStack)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
+
+with open("hsv.json", "w") as f:
+    json.dump({"hsv_min": [h_min, s_min, v_min], "hsv_max": [h_max, s_max, v_max]}, f)
     
 cap.release()
 cv2.destroyAllWindows()

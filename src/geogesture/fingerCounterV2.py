@@ -31,7 +31,6 @@ class FingerCounter:
             h_contour = max(contours, key = cv2.contourArea) # Assumes biggest area is the hand
             cv2.drawContours(roi_frame, h_contour, -1, (255,0,0), 2)
             h_hull = cv2.convexHull(h_contour)
-            h_hull[::-1].sort(axis=0)
             cv2.drawContours(roi_frame, [h_hull], -1, (0,0,255), 2, 2)
             # find center of mass
             M = cv2.moments(h_contour)
