@@ -32,6 +32,13 @@ class FingerCounter:
             cv2.drawContours(roi_frame, h_contour, -1, (255,0,0), 2)
             h_hull = cv2.convexHull(h_contour)
             cv2.drawContours(roi_frame, [h_hull], -1, (0,0,255), 2, 2)
+            # find center of mass
+            M = cv2.moments(h_contour)
+            cx = int(M['m10']/M['m00'])
+            cy = int(M['m01']/M['m00'])
+            cv2.circle(roi_frame, (cx, cy), 5, (0,255,0), -1)
+            
+
             return h_contour
         
     def find_fingers(self, h_contour):
