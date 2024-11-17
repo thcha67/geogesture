@@ -16,7 +16,7 @@ class FingerCounter:
         roi_blur = cv2.GaussianBlur(roi_frame, (5,5),0)
         roi_hsv = cv2.cvtColor(roi_blur, cv2.COLOR_BGR2HSV)
         lower_hsv = np.array([0,0,0])
-        upper_hsv = np.array([179,255,142])
+        upper_hsv = np.array([179,255,135])
         mask = cv2.inRange(roi_hsv, lower_hsv, upper_hsv)
         return mask, roi_frame
     
@@ -27,9 +27,13 @@ class FingerCounter:
             cv2.drawContours(roi_frame, h_contour, -1, (255,0,0), 2)
             h_hull = cv2.convexHull(h_contour)
             cv2.drawContours(roi_frame, [h_hull], -1, (0,0,255), 2, 2)
-            return h_contour
+        else:
+            h_contour = None
+        return h_contour
         
     def find_fingers(self, h_contour):
+        if h_contour is None:
+            return 0
         hand_perim = cv2.arcLength(h_contour,True)
         hand_polygon = cv2.approxPolyDP(h_contour, 0.02*hand_perim, True)
         h_pol_hull = cv2.convexHull(hand_polygon,returnPoints=False)
@@ -56,13 +60,18 @@ class FingerCounter:
     def run(self):
         while (True):
             ret, frame = self.cap.read()
+            if not ret:
+                break
             frame = cv2.flip(frame, 1)
-            cv2.rectangle(frame, self.roi_p1, self.roi_p2, (0,255,0), 2)
             mask, roi_frame = self.segment_hand(frame)
+            cv2.rectangle(frame, self.roi_p1, self.roi_p2, (0,255,0), 2)
             cv2.imshow("Mask", mask)
             h_contour = self.find_contours(mask, roi_frame)
             count = self.find_fingers(h_contour)
-            cv2.putText(frame, str(count), (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 2, cv2.LINE_AA)
+            text = str(count)
+            if count is None:
+                text = "Paume"
+            cv2.putText(frame, text, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 2, cv2.LINE_AA)
             cv2.imshow("Frame", frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
