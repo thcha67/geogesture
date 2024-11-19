@@ -7,10 +7,15 @@ from pynput import keyboard
 from multiprocessing import Process, Queue, Event
 import multiprocessing as mp
 from collections import deque
+from pathlib import Path
 
+
+calibration_file = Path("calibration.json")
+
+if not calibration_file.exists():
+    raise FileNotFoundError("Calibration file not found. Please run calibration.py first.")
 
 class FingerCounter:
-    
     def __init__(self, video_source):
         self.cap = cv2.VideoCapture(video_source, cv2.CAP_DSHOW)
         width, height = self.cap.get(3), self.cap.get(4)
@@ -26,12 +31,12 @@ class FingerCounter:
         roi_blur = cv2.GaussianBlur(roi_frame, (5,5),0)
         roi_hsv = cv2.cvtColor(roi_blur, cv2.COLOR_BGR2HSV)
 
-        with open("hsv.json") as f: # Load hsv values from json file
-            hsv_values = json.load(f)
-            lower_hsv = np.array(hsv_values["hsv_min"])
-            upper_hsv = np.array(hsv_values["hsv_max"])
+        with open(calibration_file) as f: # Load calibration data from json file
+            calibration = json.load(f)
+            min_values = np.array(calibration["min_values"])
+            max_values = np.array(calibration["max_values"])
         
-        mask = cv2.inRange(roi_hsv, lower_hsv, upper_hsv)
+        mask = cv2.inRange(roi_hsv, min_values, max_values)
         return mask, roi_frame
     
     def find_contours(self, mask, roi_frame):
