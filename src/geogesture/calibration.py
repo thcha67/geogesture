@@ -5,10 +5,14 @@ from pathlib import Path
 
 calibration_file = Path("calibration.json")
 
-with open(calibration_file) as f:
-    hsv_values = json.load(f)
-    h_min, s_min, v_min = hsv_values["hsv_min"]
-    h_max, s_max, v_max = hsv_values["hsv_max"]
+if calibration_file.exists():
+    with open(calibration_file) as f:
+        hsv_values = json.load(f)
+        h_min, s_min, v_min = hsv_values["hsv_min"]
+        h_max, s_max, v_max = hsv_values["hsv_max"]
+else:
+    h_min, s_min, v_min = 0, 0, 0
+    h_max, s_max, v_max = 179, 255, 255
 
 cv2.namedWindow("TrackBars")
 cv2.resizeWindow("TrackBars", 640, 240)

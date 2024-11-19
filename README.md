@@ -3,6 +3,12 @@
 
 ## Comment utiliser?
 
+### Installation
+Pour installer les dépendances, exécutez la commande suivante:
+```bash
+pip install -r requirements.txt
+```
+
 ### Calibration
 Avant de débuter, une calibration des seuils de luminosité est nécessaire. Pour ce faire, exécutez le script `calibrate.py` et ajuster votre environnement physique ainsi que les sliders pour obtenir un bon résultat. Idéalement, la main doit être blanche sur un fond noire dans le fenêtre `mask`. Une fois des bonnes valeurs trouvées, appuyez sur la touche `q` pour quitter. Les valeurs de calibration seront enregistrées dans `calibration.json`.
 
