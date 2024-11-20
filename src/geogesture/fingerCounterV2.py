@@ -6,7 +6,7 @@ import json
 class FingerCounter:
     
     def __init__(self, video_source):
-        self.cap = cv2.VideoCapture(video_source)
+        self.cap = cv2.VideoCapture(video_source, cv2.CAP_DSHOW)
         self.width = self.cap.get(3)
         self.height = self.cap.get(4)
         self.roi_p1 = (int(self.width/2), 0)
@@ -16,7 +16,7 @@ class FingerCounter:
         roi_frame = frame[self.roi_p1[1]:self.roi_p2[1],self.roi_p1[0]:self.roi_p2[0]]
         roi_blur = cv2.GaussianBlur(roi_frame, (5,5),0)
         roi_hsv = cv2.cvtColor(roi_blur, cv2.COLOR_BGR2HSV)
-        
+
         with open("hsv.json") as f:
             hsv_values = json.load(f)
             lower_hsv = np.array(hsv_values["hsv_min"])
@@ -32,17 +32,28 @@ class FingerCounter:
             cv2.drawContours(roi_frame, h_contour, -1, (255,0,0), 2)
             h_hull = cv2.convexHull(h_contour)
             cv2.drawContours(roi_frame, [h_hull], -1, (0,0,255), 2, 2)
+            # find center of mass
+            M = cv2.moments(h_contour)
+            try:
+                cx = int(M['m10']/M['m00'])
+                cy = int(M['m01']/M['m00'])
+                cv2.circle(roi_frame, (cx, cy), 5, (0,255,0), -1)
+            except ZeroDivisionError:
+                pass
+    
+            return h_contour
         else:
-            h_contour = None
-        return h_contour
+            return None
+
         
     def find_fingers(self, h_contour):
         if h_contour is None:
             return 0
         hand_perim = cv2.arcLength(h_contour,True)
         hand_polygon = cv2.approxPolyDP(h_contour, 0.02*hand_perim, True)
-        h_pol_hull = cv2.convexHull(hand_polygon,returnPoints=False)
-        convex_defects = cv2.convexityDefects(hand_polygon,h_pol_hull)
+        h_pol_hull = cv2.convexHull(hand_polygon, returnPoints=False)
+        h_pol_hull[::-1].sort(axis=0)
+        convex_defects = cv2.convexityDefects(hand_polygon, h_pol_hull)
         if convex_defects is not None:
             count = 0
             points = []
