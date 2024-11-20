@@ -1,5 +1,5 @@
 # Détection de gestuelle des mains avec OpenCV pour la commande du jeu GeoGuessr
-### Par: Thomas
+### Par: Thomas Charland, Émile Tremblay-Antoine, Jonathan Roussel, Xavier Ferland-Turbis et Vincent Lafrance
 
 ## Comment utiliser?
 
