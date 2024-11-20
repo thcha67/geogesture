@@ -1,11 +1,18 @@
 import cv2
 import numpy as np
 import json
+from pathlib import Path
 
-with open("hsv.json") as f:
-    hsv_values = json.load(f)
-    h_min, s_min, v_min = hsv_values["hsv_min"]
-    h_max, s_max, v_max = hsv_values["hsv_max"]
+calibration_file = Path("calibration.json")
+
+if calibration_file.exists():
+    with open(calibration_file) as f:
+        hsv_values = json.load(f)
+        h_min, s_min, v_min = hsv_values["hsv_min"]
+        h_max, s_max, v_max = hsv_values["hsv_max"]
+else:
+    h_min, s_min, v_min = 0, 0, 0
+    h_max, s_max, v_max = 179, 255, 255
 
 cv2.namedWindow("TrackBars")
 cv2.resizeWindow("TrackBars", 640, 240)
@@ -26,6 +33,7 @@ roi_top = int(0)
 roi_bot = int(height/2)
 roi_left = int(width/2)
 roi_right = int(width)
+
 while True:
     success, img = cap.read()
     img = cv2.flip(img,1)
@@ -49,13 +57,15 @@ while True:
     cv2.imshow("HSV", imgHSV)
     cv2.imshow("Mask", mask)
     cv2.imshow("Result", imgResult)
-    # imgStack = stackImages(0.25, ([img, imgHSV], [mask, imgResult]))
-    # cv2.imshow("Stacked Images", imgStack)
+
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
-with open("hsv.json", "w") as f:
-    json.dump({"hsv_min": [h_min, s_min, v_min], "hsv_max": [h_max, s_max, v_max]}, f)
+
+
+with open(calibration_file, "w") as f:
+    json.dump({"min_values": [h_min, s_min, v_min], "max_values": [h_max, s_max, v_max]}, f)
+    print(f"Calibration values saved to {calibration_file.name}")
     
 cap.release()
 cv2.destroyAllWindows()
