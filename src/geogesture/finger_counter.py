@@ -209,7 +209,7 @@ if __name__ == "__main__":
 
             buffer_is_circle.append(center is not None)
 
-            if any(buffer_is_circle): # If any of the last 5 frames is a circle, then it is a circle since the circle detection almost never has false positives
+            if any(buffer_is_circle): # If any of the last 10 frames is a circle, then it is a circle since the circle detection almost never has false positives
                 if center is None:
                     center = previous_center
             
@@ -217,22 +217,21 @@ if __name__ == "__main__":
                 x, y = center
                 x = int(x * x_factor + x_offset)
                 y = int(y * y_factor + y_offset)
-
-                print(x, y, sum((x, y)), sum(screen_corners[1]))
                 
                 if abs(sum((x, y))) > sum(screen_corners[1]): # check if the center has a valid value
                     continue # Skip this iteration if the center is invalid
 
                 if count in (2, 3, 4, 5):
-
-                    mouse.drag(*(previous_center or center), x, y)
+                    mouse.hold()
+                    mouse.move(x, y)
                 else:
                     mouse.move(x, y)
+                    mouse.release()
+                
                 previous_center = (x, y)
 
             else:
                 if count == 1 or count is None: # Click
-                    print("Click")
                     mouse.click()
                 elif count == 3:  # Scroll up
                     #print("Scroll up")
