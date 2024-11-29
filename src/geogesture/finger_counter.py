@@ -188,7 +188,7 @@ if __name__ == "__main__":
     process_task.start()
     keyboard_task.start()
 
-    buffer_length = 10
+    buffer_length = 30
 
     buffer_count = deque(maxlen=buffer_length)  # Buffer to store the last 5 finger counts
     buffer_count.extend([2]*buffer_length) # Initialize buffer with 5s (release)
@@ -196,8 +196,12 @@ if __name__ == "__main__":
     buffer_is_circle = deque(maxlen=buffer_length)  # Buffer to store the last 5 is_circle values
     buffer_is_circle.extend([False]*buffer_length) # Initialize buffer with False
 
+    buffer_click = deque(maxlen=buffer_length)  # Buffer to store the last 5 click values
+    buffer_click.extend([False]*buffer_length) # Initialize buffer with False
 
     previous_center = None
+
+    i = 0
 
     while True:    
         if flags[0].is_set() and not flags[2].is_set():
@@ -206,6 +210,13 @@ if __name__ == "__main__":
             
             buffer_count.append(count)
             count = max(set(buffer_count), key=buffer_count.count) # Get the most common finger count in the buffer
+
+            click = count == 1 or count is None
+
+            if any(buffer_click): # If any of the last 10 frames is a click
+                if click:
+                    click = False
+            buffer_click.append(click)
 
             buffer_is_circle.append(center is not None)
 
@@ -222,25 +233,30 @@ if __name__ == "__main__":
                     continue # Skip this iteration if the center is invalid
 
                 if count in (2, 3, 4, 5):
+                    print(f"Count: {count} - Action: Hold")
                     mouse.hold()
                     mouse.move(x, y)
                 else:
+                    print(f"Count: {count} - Action: Release")
                     mouse.move(x, y)
                     mouse.release()
                 
                 previous_center = (x, y)
 
             else:
-                if count == 1 or count is None: # Click
+                if click: # Click
+                    print(f"Count: {count} - Action: Click")
                     mouse.click()
                 elif count == 3:  # Scroll up
-                    #print("Scroll up")
+                    print(f"Count: {count} - Action: Scroll Up")
                     mouse.wheel(1)
                 elif count == 5:  # Scroll down
-                    #print("Scroll down")
+                    print(f"Count: {count} - Action: Scroll Down")
                     mouse.wheel(-1)
             
             flags[0].clear()
+
+            i += 1
 
         if flags[1].is_set():
             break
