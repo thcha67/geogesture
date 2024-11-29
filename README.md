@@ -17,9 +17,9 @@ Une fois la calibration effectuée, exécutez le script `finger_counter.py`. Une
 
 ### GeoGuessr
 Pour jouer à GeoGuessr en version gratuite, dirigez-vous sur le site [OpenGuessr](https://openguessr.com/). Pour naviguer dans le jeu, utilisez les gestes suivants:
-- **Clic gauche**: Levez 2 doigts
-- **Maintenir le clic gauche**: Collez les doigts pour faire une paume (le compteur affichera `None`).
-- **Déplacer la souris**: Déplacez votre main dans la direction souhaitée. Le centre de masse du polygone de la main guide le déplacement.
-- **Relâcher le clic gauche**: Écartez les doigts pour que les 5 soient distincts (le compteur affichera `5`).
+- **Clic gauche**: Montrer une paume
+- **Maintenir le clic gauche**: Faire un signer "OK" avec la main et lever les doigts (peu importe le nombre). Il est important que le "trou" dans la main soit bien visible.
+- **Déplacer la souris**: La souris peut être déplacée dès que le signe "OK" est fait.
+- **Relâcher le clic gauche**: Faire un signe "OK", mais descendre les doigts pour relâcher le clic, de façon à ce que seulement un cercle soit visible.
 - **Zoom avant**: Montrez 3 doigts.
-- **Zoom arrière**: Montrez 4 doigts.
+- **Zoom arrière**: Montrez 5 doigts.
