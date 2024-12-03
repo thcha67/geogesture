@@ -212,10 +212,13 @@ if __name__ == "__main__":
 
     i = 0
 
+    import pyautogui as mouse
+
     while True:    
         if flags[0].is_set() and not flags[2].is_set():
             
             count, center = queue.get()
+            print(count, center)
             
             buffer_count.append(count)
             count = max(set(buffer_count), key=buffer_count.count) # Get the most common finger count in the buffer
@@ -250,26 +253,33 @@ if __name__ == "__main__":
 
                 if count in (2, 3, 4, 5):
                     print(f"Count: {count} - Action: Hold")
-                    mouse.hold()
-                    mouse.move(x, y)
+                    mouse.mouseDown(_pause=False)
+                    mouse.moveTo(x, y, _pause=False)
+                    # mouse.hold()
+                    # mouse.move(x, y)
                 else:
                     print(f"Count: {count} - Action: Release")
-                    mouse.move(x, y)
-                    mouse.release()
+                    mouse.moveTo(x, y, _pause=False)
+                    mouse.mouseUp(_pause=False)
+                    # mouse.move(x, y)
+                    # mouse.release()
                 
                 previous_center = (x, y)
 
             else:
                 if click: # Click
                     print(f"Count: {count} - Action: Click")
-                    mouse.click()
+                    mouse.click(_pause=False)
+                    # mouse.click()
                 elif zoom: # Zoom
                     if count == 3:  # Scroll up
                         print(f"Count: {count} - Action: Scroll Up")
-                        mouse.wheel(1)
+                        mouse.scroll(1, _pause=False)
+                        # mouse.wheel(1)
                     elif count == 5:  # Scroll down
                         print(f"Count: {count} - Action: Scroll Down")
-                        mouse.wheel(-1)
+                        mouse.scroll(-1, _pause=False)
+                        # mouse.wheel(-1)
             
             flags[0].clear()
 
