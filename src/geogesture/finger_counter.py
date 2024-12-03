@@ -54,15 +54,14 @@ class FingerCounter:
             return h_contour
 
         
-    def find_fingers(self, h_contour, center_of_mass, roi_frame):
+    def find_fingers(self, mask, h_contour, center_of_mass, roi_frame):
         if h_contour is None:
-            return 0
+            return 0, None
         hand_perim = cv2.arcLength(h_contour, True)
         hand_polygon = cv2.approxPolyDP(h_contour, 0.02*hand_perim, True)
         h_pol_hull = cv2.convexHull(hand_polygon, returnPoints=False)
         h_pol_hull[::-1].sort(axis=0) # Sort hull points in descending order
         convex_defects = cv2.convexityDefects(hand_polygon, h_pol_hull)
-
         if convex_defects is not None:
             points = hand_polygon[convex_defects[:, 0][:, [0, 1, 2]]][:, :, 0]
             start_pts, end_pts, far_pts = points[:, 0], points[:, 1], points[:, 2]
@@ -83,10 +82,16 @@ class FingerCounter:
             angles = np.arccos((dist_far_start**2 + dist_far_end**2 - dist_start_end**2) / (2 * dist_far_start * dist_far_end))
 
             count = np.sum((angles < np.pi / 2) & (far_pts[:, 1] < threshold_line)) + 1
-            
-            return count if count is not None else 0
 
-    def find_circle(self, mask, h_contour, roi_frame, center_of_mass):
+            hand = cv2.convexHull(hand_polygon, returnPoints=True)
+    
+            circle_center = self.find_circle(mask, hand, roi_frame)
+            
+            return (count if count is not None else 0), circle_center
+        
+        return None, None
+
+    def find_circle(self, mask, h_contour, roi_frame):
         x, y, w, h = cv2.boundingRect(h_contour)
 
         new_mask = (mask[y:y+h, x:x+w]).astype(np.uint8)
@@ -130,9 +135,9 @@ class FingerCounter:
                     pass
 
                 cv2.circle(roi_frame, center_of_mass, 5, (0,255,0), -1)
-                count = self.find_fingers(h_contour, center_of_mass, roi_frame)
+                count, circle_center = self.find_fingers(mask, h_contour, center_of_mass, roi_frame)
 
-                circle_center = self.find_circle(mask, h_contour, roi_frame, center_of_mass)
+                # circle_center = self.find_circle(mask, h_contour, roi_frame)
                 
                 cv2.putText(frame, str(count), (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 2, cv2.LINE_AA) # Display finger count
                 
