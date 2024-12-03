@@ -62,6 +62,9 @@ class FingerCounter:
         h_pol_hull = cv2.convexHull(hand_polygon, returnPoints=False)
         h_pol_hull[::-1].sort(axis=0) # Sort hull points in descending order
         convex_defects = cv2.convexityDefects(hand_polygon, h_pol_hull)
+
+        count = None
+
         if convex_defects is not None:
             points = hand_polygon[convex_defects[:, 0][:, [0, 1, 2]]][:, :, 0]
             start_pts, end_pts, far_pts = points[:, 0], points[:, 1], points[:, 2]
@@ -83,18 +86,17 @@ class FingerCounter:
 
             count = np.sum((angles < np.pi / 2) & (far_pts[:, 1] < threshold_line)) + 1
 
-            hand = cv2.convexHull(hand_polygon, returnPoints=True)
-    
-            circle_center = self.find_circle(mask, hand, roi_frame)
-            
-            return (count if count is not None else 0), circle_center
+        hand = cv2.convexHull(hand_polygon, returnPoints=True)
+        circle_center = self.find_circle(mask, hand, roi_frame)
         
-        return None, None
+        return count or None, circle_center
 
     def find_circle(self, mask, h_contour, roi_frame):
         x, y, w, h = cv2.boundingRect(h_contour)
 
         new_mask = (mask[y:y+h, x:x+w]).astype(np.uint8)
+
+        np.save("mask.npy", new_mask)
 
         detector = cv2.SimpleBlobDetector_create()
         keypoints = detector.detect(new_mask)
@@ -103,8 +105,9 @@ class FingerCounter:
             keypoints = sorted(keypoints, key=lambda x: x.size, reverse=True)[:1]
         
         if len(keypoints) == 1:
+            radius = int(keypoints[0].size)//2
             center = (int(keypoints[0].pt[0]) + x, int(keypoints[0].pt[1]) + y)
-            cv2.circle(roi_frame, center, int(keypoints[0].size), (0, 255, 0), 2)
+            cv2.circle(roi_frame, center, radius, (0, 255, 0), 2)
             cv2.circle(roi_frame, center, 2, (0, 0, 255), 3)
             return center
         
@@ -136,8 +139,6 @@ class FingerCounter:
 
                 cv2.circle(roi_frame, center_of_mass, 5, (0,255,0), -1)
                 count, circle_center = self.find_fingers(mask, h_contour, center_of_mass, roi_frame)
-
-                # circle_center = self.find_circle(mask, h_contour, roi_frame)
                 
                 cv2.putText(frame, str(count), (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 2, cv2.LINE_AA) # Display finger count
                 
@@ -204,6 +205,9 @@ if __name__ == "__main__":
     buffer_click = deque(maxlen=buffer_length)  # Buffer to store the last 5 click values
     buffer_click.extend([False]*buffer_length) # Initialize buffer with False
 
+    buffer_zoom = deque(maxlen=buffer_length)  # Buffer to store the last 5 zoom values
+    buffer_zoom.extend([False]*buffer_length) # Initialize buffer with 0
+
     previous_center = None
 
     i = 0
@@ -218,14 +222,21 @@ if __name__ == "__main__":
 
             click = count == 1 or count is None
 
-            if any(buffer_click): # If any of the last 10 frames is a click
+            if any(buffer_click): # If any of the last n frames is a click
                 if click:
                     click = False
             buffer_click.append(click)
 
+            zoom = count == 3 or count == 5
+
+            if any(buffer_zoom): # If any of the last n frames is a zoom
+                if zoom:
+                    zoom = False
+            buffer_zoom.append(zoom)
+
             buffer_is_circle.append(center is not None)
 
-            if any(buffer_is_circle): # If any of the last 10 frames is a circle, then it is a circle since the circle detection almost never has false positives
+            if any(buffer_is_circle): # If any of the last n frames is a circle, then it is a circle since the circle detection almost never has false positives
                 if center is None:
                     center = previous_center
             
@@ -252,12 +263,13 @@ if __name__ == "__main__":
                 if click: # Click
                     print(f"Count: {count} - Action: Click")
                     mouse.click()
-                elif count == 3:  # Scroll up
-                    print(f"Count: {count} - Action: Scroll Up")
-                    mouse.wheel(1)
-                elif count == 5:  # Scroll down
-                    print(f"Count: {count} - Action: Scroll Down")
-                    mouse.wheel(-1)
+                elif zoom: # Zoom
+                    if count == 3:  # Scroll up
+                        print(f"Count: {count} - Action: Scroll Up")
+                        mouse.wheel(1)
+                    elif count == 5:  # Scroll down
+                        print(f"Count: {count} - Action: Scroll Down")
+                        mouse.wheel(-1)
             
             flags[0].clear()
 
